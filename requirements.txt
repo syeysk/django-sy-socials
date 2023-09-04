@@ -1,0 +1,7 @@
+cryptography==41.0.3
+django==4.2.1
+djangorestframework==3.14.0
+django-environ==0.10.0
+drf-spectacular==0.26.2
+requests==2.31.0
+git+https://github.com/syeysk/django-sy-framework.git

@@ -1,0 +1,19 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block menu_microservice_name %}Ваше название{% endblock %}
+{% block site_title %}Платформа{% endblock %}
+{% block start_of_head %}{% endblock %}
+{% block menu_items_microservice %}
+    {% include "base/menu_items_microservice.html" with url_name="your_django_url_name" url_title="Ваш пункт меню" %}
+{% endblock %}
+{% block source_code_link %}
+    <a href="https://github.com/syeysk/django-sy-platform" target="_blank">GitHub</a>
+{% endblock %}
+
+{% block description %}{% endblock %}
+{% block keywords %}{% endblock %}
+{% block page_title %}{% endblock %}
+{% block title %}{% endblock %}
+{% block content %}{% endblock %}
+{% block end_of_body %}{% endblock %}
