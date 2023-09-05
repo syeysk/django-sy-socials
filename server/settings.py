@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django_sy_framework.linker',
     'server',
     'pages',
+    'social',
 ]
 
 MIDDLEWARE = [
@@ -126,11 +127,7 @@ AUTH_USER_MODEL = 'custom_auth.CustomAuthUser'
 AUTHENTICATION_BACKENDS = ['django_sy_framework.custom_auth.backend.CustomAuthBackend']
 MICROSERVICES_TOKENS = {
     'to_auth': env('MICROSERVICE_TOKEN_TO_AUTH'),
-    'to_faci': env('MICROSERVICE_TOKEN_TO_FACI'),
-    'to_note': env('MICROSERVICE_TOKEN_TO_NOTE'),
 }
 MICROSERVICES_URLS = {
     'auth': env('MICROSERVICE_URL_AUTH'),
-    'faci': env('MICROSERVICE_URL_FACI'),
-    'note': env('MICROSERVICE_URL_NOTE'),
 }

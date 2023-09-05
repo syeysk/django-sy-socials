@@ -1,14 +1,14 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
-{% block menu_microservice_name %}Ваше название{% endblock %}
-{% block site_title %}Платформа{% endblock %}
+{% block menu_microservice_name %}Кросспостер{% endblock %}
+{% block site_title %}Автоматизация взаимодействия с соц. сетями{% endblock %}
 {% block start_of_head %}{% endblock %}
 {% block menu_items_microservice %}
-    {% include "base/menu_items_microservice.html" with url_name="your_django_url_name" url_title="Ваш пункт меню" %}
+    {% include "base/menu_items_microservice.html" with url_name="social_list" url_title="Аккаунты соцсетей" %}
 {% endblock %}
 {% block source_code_link %}
-    <a href="https://github.com/syeysk/django-sy-platform" target="_blank">GitHub</a>
+    <a href="https://github.com/syeysk/django-sy-socials" target="_blank">GitHub</a>
 {% endblock %}
 
 {% block description %}{% endblock %}
