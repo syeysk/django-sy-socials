@@ -5,17 +5,98 @@
 {% block page_title %}Соц. сети{% endblock %}
 
 {% block content %}
+    {{ socials|json_script:'social_list' }}
+    {{ adapters|json_script:'adapters' }}
 
 		<script>
+			  var URL_ADD_SOCIAL = '';
+        var CSRF_TOKEN = "{{ csrf_token }}";
+		</script>
+
+    <div id="app_social_list_id"></div>
+
+		<script>
+        SocialComponent = {
+            props: ['adapter', 'title', 'isCollapsed', 'isNew', 'adapters'],
+            data() {
+                return {
+                    mIsCollapsed: this.isCollapsed,
+                    mIsNew: this.isNew,
+                    mAdapter: this.adapter,
+                    mTitle: this.title,
+                };
+            },
+            emits: ['toggle'],
+            template: `
+                <div style="cursor: pointer;" @click="$emit('toggle', this)">
+                    [[title]]
+                </div>
+                <form v-if="mIsCollapsed">
+                    <div class="mb-3 form-group" id="adapter-group">
+  					            <div class="form-floating">
+                            <select :disabled="!mIsNew" v-model="mAdapter" class="form-select" id="adapter-field">
+                                <option value="" :selected="mIsNew" disabled>Адаптер соцсети</option>
+                                <option
+                                    v-for="adapter_variable in adapters"
+                                    :value="adapter_variable[0]"
+                                    :selected="adapter_variable[0] == adapter"
+                                >[[ adapter_variable[1] ]]</option>
+                            </select>
+                            <label for="adapter-field">Адаптер соцсетей</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-group" id="title-group">
+                        <div class="form-floating">
+                            <input v-model="mTitle" class="form-control" type="text" name="text" :id="'text-' + $.vnode.key + 'field'">
+                            <label :for="'title-' + $.vnode.key + 'field'" class="form-label">Заголовок аккаунта</label>
+                         </div>
+                    </div>
+                </form>
+            `
+        }
 		</script>
 
 		<script>
+  			SocialsComponent = {
+	   		    data() {
+		  	        return {
+		  	            socials: JSON.parse(document.getElementById('social_list').textContent),
+		  	            adapters: JSON.parse(document.getElementById('adapters').textContent),
+		  	        };
+			      },
+			      components: {SocialComponent},
+			      template: `
+			          <social-component
+			              v-for="social in socials"
+			              :key="social.id"
+			              :adapter="social.adapter"
+			              :title="social.title"
+			              :is-collapsed="false"
+			              @toggle="toggle"
+			              :adapters="adapters"
+			              :is-new="true"
+			          ></social-component>
+  			    `,
+  			    methods: {
+  			       toggle(component) {
+  			           console.log(component)
+  			           if (component.mIsCollapsed) {
+  			               component.mIsCollapsed = false;
+  			           } else {
+  			               component.mIsCollapsed = true;
+  			           }
+  			       }
+  			    }
+	  		}
 		</script>
 
 		<script>
-		</script>
+			  const { createApp } = Vue;
 
-		<script>
+        var app_socials = createApp(SocialsComponent);
+        app_socials.config.compilerOptions.delimiters = [ '[[', ']]' ];
+        app_socials.mount('#app_social_list_id');
 		</script>
 
 {% endblock %}

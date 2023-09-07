@@ -1,5 +1,6 @@
 from social.adapters.base_adapter import BaseAdapter
 from social.adapters.telegram_adapter import TelegramAdapter
+from social.adapters.discord_adapter import DiscordAdapter
 
 
 def get_adapter_names(add_class=False):
