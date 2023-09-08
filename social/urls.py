@@ -5,5 +5,5 @@ from social.views import (
 )
 
 urlpatterns = [
-    path('socials/', ListSocialsView.as_view(), name='social_list'),
+    path('socials/', ListSocialsView.as_view(), name='social_list_or_add'),
 ]

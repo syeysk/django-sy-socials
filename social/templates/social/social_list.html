@@ -17,25 +17,79 @@
 
 		<script>
         SocialComponent = {
-            props: ['adapter', 'title', 'isCollapsed', 'isNew', 'adapters'],
+            props: ['adapter', 'title', 'isNew', 'adapters'],
             data() {
                 return {
-                    mIsCollapsed: this.isCollapsed,
+                    collapsed: this.isNew ? false : true,
                     mIsNew: this.isNew,
                     mAdapter: this.adapter,
                     mTitle: this.title,
                 };
             },
             emits: ['toggle'],
+            methods: {
+                toggle(event) {
+                    this.collapsed = this.collapsed ? false : true;
+                    this.$emit('toggle', this, this.collapsed);
+                },
+                save(event) {
+                    let self = this;
+                    let form = event.target.form;
+                    $.ajax({
+                        url: URL_ADD_SOCIAL + this.$.vnode.key,
+                        headers: {"X-CSRFToken": CSRF_TOKEN},
+                        dataType: 'json',
+                        data: $(form).serialize(),
+                        success: function(result) {
+                            clear_status_fields(form);
+                            set_valid_field(form, result.updated_fields);
+
+                            console.log('cred', result.updated_cred_fields);
+                            let updated_cred_fields = result.updated_cred_fields;
+                            for (let index=0; index < updated_cred_fields.length; index++) {
+                                updated_cred_fields[index] = 'cred-' + updated_cred_fields[index];
+                            }
+                            set_valid_field(form, updated_cred_fields);
+
+                            self.$.vnode.key = result.id;
+                            self.mIsNew = false;
+                            self.badMessage = '';
+                        },
+                        statusCode: {
+                            500: function(xhr) {
+                                self.badMessage = 'ошибка сервера'
+                            },
+                            400: function(xhr) {
+                                clear_status_fields(form);
+                                set_invalid_field(form, xhr.responseJSON);
+
+                                let cred_fields_with_prefix = {};
+                                let cred_fields = xhr.responseJSON['credentials'];
+                                if (cred_fields) {
+                                    for (field_name in cred_fields) {
+                                        cred_fields_with_prefix['cred-' + field_name] = cred_fields[field_name];
+                                    }
+                                    set_invalid_field(form, cred_fields_with_prefix);
+                                }
+
+                                self.badMessage = ''
+                            },
+                            404: function(xhr) {
+                                self.badMessage = 'база с таким именем не существует'
+                            },
+                        },
+                        method: "post"
+                    });
+                },
+            },
             template: `
-                <div style="cursor: pointer;" @click="$emit('toggle', this)">
-                    [[title]]
+                <div style="cursor: pointer;" @click="toggle">
+                    [[mTitle]]
                 </div>
-                <form v-if="mIsCollapsed">
+                <form v-if="!collapsed">
                     <div class="mb-3 form-group" id="adapter-group">
   					            <div class="form-floating">
                             <select :disabled="!mIsNew" v-model="mAdapter" class="form-select" id="adapter-field">
-                                <option value="" :selected="mIsNew" disabled>Адаптер соцсети</option>
                                 <option
                                     v-for="adapter_variable in adapters"
                                     :value="adapter_variable[0]"
@@ -48,10 +102,12 @@
 
                     <div class="mb-3 form-group" id="title-group">
                         <div class="form-floating">
-                            <input v-model="mTitle" class="form-control" type="text" name="text" :id="'text-' + $.vnode.key + 'field'">
+                            <input v-model="mTitle" class="form-control" type="text" name="title" :id="'text-' + $.vnode.key + 'field'">
                             <label :for="'title-' + $.vnode.key + 'field'" class="form-label">Заголовок аккаунта</label>
                          </div>
                     </div>
+
+                    <input type="button" value="Сохранить" class="btn btn-secondary" @click="save">
                 </form>
             `
         }
@@ -63,30 +119,44 @@
 		  	        return {
 		  	            socials: JSON.parse(document.getElementById('social_list').textContent),
 		  	            adapters: JSON.parse(document.getElementById('adapters').textContent),
+		  	            uncollapsed_component: null,
 		  	        };
 			      },
 			      components: {SocialComponent},
 			      template: `
+			          <button @click="add">Добавить аккаунт</button>
 			          <social-component
 			              v-for="social in socials"
 			              :key="social.id"
 			              :adapter="social.adapter"
 			              :title="social.title"
-			              :is-collapsed="false"
 			              @toggle="toggle"
 			              :adapters="adapters"
-			              :is-new="true"
+			              :is-new="social.isNew"
 			          ></social-component>
   			    `,
   			    methods: {
-  			       toggle(component) {
-  			           console.log(component)
-  			           if (component.mIsCollapsed) {
-  			               component.mIsCollapsed = false;
-  			           } else {
-  			               component.mIsCollapsed = true;
-  			           }
-  			       }
+  			       toggle(component, is_collapsed) {
+                   if (!is_collapsed && this.uncollapsed_component && component != this.uncollapsed_component) {
+                        this.uncollapsed_component.collapsed = true;
+                    }
+                    this.uncollapsed_component = component;
+  			       },
+  			       add(event) {
+                    if (this.uncollapsed_component && !this.uncollapsed_component.isNew) {
+                        this.uncollapsed_component.collapsed = true;
+                    }
+                    if (this.socials.length == 0 || this.socials[0].id) {
+                        this.socials.unshift({
+                            adapter: '',
+                            description: '',
+                            title: '',
+                            id: '',
+                            isNew: true,
+                            credentials: {},
+                        });
+                    }
+                }
   			    }
 	  		}
 		</script>
