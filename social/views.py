@@ -57,8 +57,8 @@ class ListSocialsView(APIView):
                 name for name, value in serializer.validated_data.items() if getattr(instance, name) != value
             ]
             updated_cred_fields = [
-                name for name, value in serializer.validated_data['credentials'].items()
-                if instance.credentials.get(name) != value
+                name for name, value in json.loads(serializer.validated_data['credentials']).items()
+                if json.loads(instance.credentials).get(name) != value
             ]
             serializer.save()
         else:

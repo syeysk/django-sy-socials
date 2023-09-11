@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'server',
     'pages',
     'social',
+    'message',
 ]
 
 MIDDLEWARE = [
