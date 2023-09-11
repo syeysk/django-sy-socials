@@ -3,6 +3,10 @@ from social.adapters.telegram_adapter import TelegramAdapter
 from social.adapters.discord_adapter import DiscordAdapter
 
 
+def adapter_name_to_class(service_name):
+    return globals()['{}Adapter'.format(service_name)]
+
+
 def get_adapter_names(add_class=False):
     service_names = []
     for subclass in BaseAdapter.__subclasses__():

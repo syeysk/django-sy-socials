@@ -4,9 +4,20 @@
 {% block title %}Аккаунты социальных сетей{% endblock %}
 {% block page_title %}Соц. сети{% endblock %}
 
+{% block start_of_head %}
+    <script src="{% static 'base/extern/codemirror-5.65.14/lib/codemirror.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'base/extern/codemirror-5.65.14/lib/codemirror.css' %}">
+    <script src="{% static 'base/extern/codemirror-5.65.14/mode/javascript/javascript.js' %}"></script>
+    <script src="{% static 'base/code-mirror-component.js' %}"></script>
+    <script src="{% static 'base/map-field-component.js' %}"></script>
+    <script src="{% static 'base/map-serializer-component.js' %}"></script>
+{% endblock %}
+
+
 {% block content %}
     {{ socials|json_script:'social_list' }}
     {{ adapters|json_script:'adapters' }}
+    {{ serializer_maps|json_script:'serializer_maps' }}
 
 		<script>
 			  var URL_ADD_SOCIAL = '';
@@ -17,16 +28,21 @@
 
 		<script>
         SocialComponent = {
-            props: ['adapter', 'title', 'isNew', 'adapters'],
+            props: ['adapter', 'title', 'isNew', 'adapters', 'credentials'],
             data() {
                 return {
                     collapsed: this.isNew ? false : true,
                     mIsNew: this.isNew,
                     mAdapter: this.adapter,
+                    mCredentials: this.credentials,
                     mTitle: this.title,
+                    is_authenticated: this.credentials != undefined,
+                    badMessage: '',
+                    serializer_maps: JSON.parse(document.getElementById('serializer_maps').textContent),
                 };
             },
             emits: ['toggle'],
+            components: {MapSerializerComponent},
             methods: {
                 toggle(event) {
                     this.collapsed = this.collapsed ? false : true;
@@ -93,12 +109,13 @@
                                 <option
                                     v-for="adapter_variable in adapters"
                                     :value="adapter_variable[0]"
-                                    :selected="adapter_variable[0] == adapter"
+                                    :selected="adapter_variable[0] == mAdapter"
                                 >[[ adapter_variable[1] ]]</option>
                             </select>
                             <label for="adapter-field">Адаптер соцсетей</label>
                         </div>
                     </div>
+                    <input type="hidden" name="adapter" v-model="mAdapter">
 
                     <div class="mb-3 form-group" id="title-group">
                         <div class="form-floating">
@@ -107,7 +124,24 @@
                          </div>
                     </div>
 
-                    <input type="button" value="Сохранить" class="btn btn-secondary" @click="save">
+                    <div v-if="is_authenticated">
+                            <span v-if="serializer_maps[mAdapter]">Данные для подключения:</span>
+                            <map-serializer-component
+                                v-if="!collapsed"
+                                :serializer-map="serializer_maps[mAdapter]"
+                                v-model="mCredentials"
+                                :use-default-value="isNew"
+                                name="credentials"
+                            ></map-serializer-component>
+
+                            <br>
+
+                            <div class="alert alert-danger" role="alert" :class="{'d-none': !badMessage}">
+                                [[ badMessage ]]
+                            </div>
+
+                            <input type="button" value="Сохранить" class="btn btn-secondary" @click="save">
+                    </div>
                 </form>
             `
         }
@@ -127,12 +161,13 @@
 			          <button @click="add">Добавить аккаунт</button>
 			          <social-component
 			              v-for="social in socials"
-			              :key="social.id"
+			              :key="social.pk"
 			              :adapter="social.adapter"
 			              :title="social.title"
+			              :credentials="JSON.stringify(social.credentials)"
 			              @toggle="toggle"
 			              :adapters="adapters"
-			              :is-new="social.isNew"
+			              :is-new="social.isNew == undefined ? false : social.isNew"
 			          ></social-component>
   			    `,
   			    methods: {
@@ -146,12 +181,12 @@
                     if (this.uncollapsed_component && !this.uncollapsed_component.isNew) {
                         this.uncollapsed_component.collapsed = true;
                     }
-                    if (this.socials.length == 0 || this.socials[0].id) {
+                    if (this.socials.length == 0 || this.socials[0].pk) {
                         this.socials.unshift({
                             adapter: '',
                             description: '',
                             title: '',
-                            id: '',
+                            pk: '',
                             isNew: true,
                             credentials: {},
                         });
