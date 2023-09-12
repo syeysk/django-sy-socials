@@ -1,0 +1,1 @@
+from social.bots.telegram_bots.knowledge_searcher_bot import KnowledgeSearcherBot

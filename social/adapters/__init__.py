@@ -3,8 +3,8 @@ from social.adapters.telegram_adapter import TelegramAdapter
 from social.adapters.discord_adapter import DiscordAdapter
 
 
-def adapter_name_to_class(name):
-    return globals()['{}Adapter'.format(name)]
+def adapter_name_to_class(adapter_name):
+    return globals()['{}Adapter'.format(adapter_name)]
 
 
 def get_adapter_names(add_class=False):

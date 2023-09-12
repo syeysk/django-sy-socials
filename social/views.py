@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from social.adapters import get_adapter_names
+from social.bots import bot_name_to_class
 from social.models import Social
 from social.serializers import SocialSerializer
 
@@ -73,3 +74,15 @@ class ListSocialsView(APIView):
         }
         return Response(status=status.HTTP_200_OK, data=response_data)
 
+
+class HookBotView(APIView):
+    def post(self, request, pk):
+        social = Social.objects.get(pk=pk)
+        bot_class = bot_name_to_class(social.adapter, 'knowledge_searcher_bot')
+        credentials = json.loads(social.credentials)
+        bot = bot_class(**credentials)
+        if hasattr(bot, 'verify_hook'):
+            if not bot.verify_hook(request):
+                raise Exception()
+
+        return bot.hook_view(request)

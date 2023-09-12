@@ -16,9 +16,19 @@ class TelegramAdapter(BaseAdapter):
         params = {
             'chat_id': channel,
             'text': text,
-            # 'reply_to_message_id': message_id,
             'disable_web_page_preview': True,
             'parse_mode': 'Markdown',
-            # 'reply_markup': reply_markup,
         }
         requests.post(f'{self.url}/sendMessage', json=params)
+
+    def verify_hook(self, request):
+        return True
+
+    def set_hook_url(self, url):
+        ...
+
+    def get_hook_url(self):
+        ...
+
+    def delete_hook_url(self):
+        ...
