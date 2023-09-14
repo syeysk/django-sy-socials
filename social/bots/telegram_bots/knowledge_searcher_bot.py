@@ -103,6 +103,8 @@ def process_callback(callback_query, url):
 
 
 class KnowledgeSearcherBot(TelegramAdapter):
+    verbose_name = 'Поисковик по базе знаний'
+
     def hook_view(self, request):
         message = request.data.get('message') or request.data.get('channel_post')
         if message:

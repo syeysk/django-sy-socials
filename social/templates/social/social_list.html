@@ -18,7 +18,7 @@
     {{ socials|json_script:'social_list' }}
     {{ adapters|json_script:'adapters' }}
     {{ serializer_maps|json_script:'serializer_maps' }}
-
+    {{ bots_by_adapter|json_script:'bots_by_adapter' }}
 		<script>
 			  var URL_ADD_SOCIAL = '';
         var CSRF_TOKEN = "{{ csrf_token }}";

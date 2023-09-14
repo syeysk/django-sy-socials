@@ -8,10 +8,10 @@ def adapter_name_to_class(adapter_name):
 
 
 def get_adapter_names(add_class=False):
-    service_names = []
+    adapter_names = []
     for subclass in BaseAdapter.__subclasses__():
-        service_names.append(
+        adapter_names.append(
             (subclass.__name__[:-7], subclass if add_class else subclass.verbose_name),
         )
 
-    return service_names
+    return adapter_names

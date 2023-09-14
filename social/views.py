@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from social.adapters import get_adapter_names
-from social.bots import bot_name_to_class
+from social.bots import bot_name_to_class, get_bot_names
 from social.models import Social
 from social.serializers import SocialSerializer
 
@@ -24,18 +24,19 @@ class ListSocialsView(APIView):
 
         auto_schema = AutoSchema()
         serializer_maps = {}
+        bots_by_adapter = {}
         for subclass_name, subclass in get_adapter_names(True):
+            bots_by_adapter[subclass_name] = get_bot_names(subclass_name)
             service_serializer = getattr(subclass, 'serializer', None)
             if service_serializer:
                 service_map = auto_schema.map_serializer(service_serializer())
-                serializer_maps[subclass_name] = []
-                for field_name, field_map in service_map['properties'].items():
-                    serializer_maps[subclass_name].append({'name': field_name, 'map': field_map})
+                serializer_maps[subclass_name] = service_map['properties']
 
         context = {
             'socials': [dict(social) for social in page.object_list.values('title', 'credentials', 'adapter', 'pk')],
             'adapters': get_adapter_names(),
             'serializer_maps': serializer_maps,
+            'bots_by_adapter': bots_by_adapter,
         }
         for social in context['socials']:
             social['credentials'] = json.loads(social['credentials']) if social['credentials'] else {}
