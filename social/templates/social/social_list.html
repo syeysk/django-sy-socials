@@ -11,6 +11,8 @@
     <script src="{% static 'base/code-mirror-component.js' %}"></script>
     <script src="{% static 'base/map-field-component.js' %}"></script>
     <script src="{% static 'base/map-serializer-component.js' %}"></script>
+    <script src="{% static 'base/windows.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'base/windows.css' %}">
 {% endblock %}
 
 
@@ -21,10 +23,20 @@
     {{ bots_by_adapter|json_script:'bots_by_adapter' }}
 		<script>
 			  var URL_ADD_SOCIAL = '';
+			  URL_CHECK_HOOK = 'check_hook/';
+			  URL_SET_HOOK = 'set_hook/';
         var CSRF_TOKEN = "{{ csrf_token }}";
 		</script>
 
     <div id="app_social_list_id"></div>
+
+    <div class="windowBody" id="check_hook">
+		  	Установлен следующий хук-URL: <span class="hook_url"></span>
+		</div>
+
+    <div class="windowBody" id="set_hook">
+		  	<span class="result"></span>
+		</div>
 
 		<script>
         SocialComponent = {
@@ -92,7 +104,41 @@
                                 self.badMessage = ''
                             },
                             404: function(xhr) {
-                                self.badMessage = 'база с таким именем не существует'
+                                self.badMessage = 'аккаунт с таким именем не существует'
+                            },
+                        },
+                        method: "post"
+                    });
+                },
+                check_hook(event) {
+                    $.ajax({
+                        url: URL_CHECK_HOOK + this.$.vnode.key,
+                        headers: {"X-CSRFToken": CSRF_TOKEN},
+                        success: function(result) {
+                            wbody = W.open('check_hook', {text_title: 'Проверка правильности хука'})
+                            wbody.querySelector('.hook_url').textContent = result.hook_url;
+                            self.badMessage = '';
+                        },
+                        statusCode: {
+                            500: function(xhr) {
+                                self.badMessage = 'ошибка сервера'
+                            },
+                        },
+                        method: "post"
+                    });
+                },
+                set_hook(event) {
+                    $.ajax({
+                        url: URL_SET_HOOK + this.$.vnode.key,
+                        headers: {"X-CSRFToken": CSRF_TOKEN},
+                        success: function(result) {
+                            wbody = W.open('set_hook', {text_title: 'Установка хука микросервиса'})
+                            wbody.querySelector('.result').textContent = result.ok ? 'Хук установлен' : 'Ошибка установки хука';
+                            self.badMessage = '';
+                        },
+                        statusCode: {
+                            500: function(xhr) {
+                                self.badMessage = 'ошибка сервера'
                             },
                         },
                         method: "post"
@@ -108,10 +154,10 @@
   					            <div class="form-floating">
                             <select :disabled="!mIsNew" v-model="mAdapter" class="form-select" id="adapter-field">
                                 <option
-                                    v-for="adapter_variable in adapters"
-                                    :value="adapter_variable[0]"
-                                    :selected="adapter_variable[0] == mAdapter"
-                                >[[ adapter_variable[1] ]]</option>
+                                    v-for="(properties, adapter_name) in adapters"
+                                    :value="adapter_name"
+                                    :selected="adapter_name == mAdapter"
+                                >[[ properties.verbose_name ]]</option>
                             </select>
                             <label for="adapter-field">Адаптер соцсетей</label>
                         </div>
@@ -132,7 +178,6 @@
                     </div>
                     <input type="hidden" name="bot" v-model="mBot">
 
-
                     <div class="mb-3 form-group" id="title-group">
                         <div class="form-floating">
                             <input v-model="mTitle" class="form-control" type="text" name="title" :id="'text-' + $.vnode.key + 'field'">
@@ -141,22 +186,34 @@
                     </div>
 
                     <div v-if="is_authenticated">
-                            <span v-if="serializer_maps[mAdapter]">Данные для подключения:</span>
-                            <map-serializer-component
-                                v-if="!collapsed"
-                                :serializer-map="serializer_maps[mAdapter]"
-                                v-model="mCredentials"
-                                :use-default-value="isNew"
-                                name="credentials"
-                            ></map-serializer-component>
+												<span v-if="serializer_maps[mAdapter]">Данные для подключения:</span>
+												<map-serializer-component
+														v-if="!collapsed"
+														:serializer-map="serializer_maps[mAdapter]"
+														v-model="mCredentials"
+														:use-default-value="isNew"
+														name="credentials"
+												></map-serializer-component>
 
-                            <br>
+												<br>
 
-                            <div class="alert alert-danger" role="alert" :class="{'d-none': !badMessage}">
-                                [[ badMessage ]]
-                            </div>
+												<div v-if="(mAdapter && !mIsNew) ? adapters[mAdapter].has_hook_buttons : false">
+														<input type="button" value="Установить хук микросервиса" class="btn btn-secondary" @click="set_hook" v-if="adapters[mAdapter].has_hook_buttons.set">
+														&nbsp;
+														<input type="button" value="Проверить правильность хука" class="btn btn-secondary" @click="check_hook" v-if="adapters[mAdapter].has_hook_buttons.get">
+														<!--
+														&nbsp;
+														<input type="button" value="Удалить" class="btn btn-secondary" @click="delete_hook" v-if="adapters[mAdapter].has_hook_buttons.delete">
+														-->
+												</div>
 
-                            <input type="button" value="Сохранить" class="btn btn-secondary" @click="save">
+												<br>
+
+												<div class="alert alert-danger" role="alert" :class="{'d-none': !badMessage}">
+														[[ badMessage ]]
+												</div>
+
+												<input type="button" value="Сохранить" class="btn btn-secondary" @click="save">
                     </div>
                 </form>
             `
