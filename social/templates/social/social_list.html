@@ -28,12 +28,13 @@
 
 		<script>
         SocialComponent = {
-            props: ['adapter', 'title', 'isNew', 'adapters', 'credentials'],
+            props: ['adapter', 'bot', 'title', 'isNew', 'adapters', 'credentials', 'botsByAdapter'],
             data() {
                 return {
                     collapsed: this.isNew ? false : true,
                     mIsNew: this.isNew,
                     mAdapter: this.adapter,
+                    mBot: this.bot,
                     mCredentials: this.credentials,
                     mTitle: this.title,
                     is_authenticated: this.credentials != undefined,
@@ -117,6 +118,21 @@
                     </div>
                     <input type="hidden" name="adapter" v-model="mAdapter">
 
+                    <div class="mb-3 form-group" id="bot-group">
+  					            <div class="form-floating">
+                            <select :disabled="!mIsNew" v-model="mBot" class="form-select" id="bot-field">
+                                <option
+                                    v-for="bot_variable in botsByAdapter[mAdapter]"
+                                    :value="bot_variable[0]"
+                                    :selected="bot_variable[0] == mBot"
+                                >[[ bot_variable[1] ]]</option>
+                            </select>
+                            <label for="bot-field">Бот</label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="bot" v-model="mBot">
+
+
                     <div class="mb-3 form-group" id="title-group">
                         <div class="form-floating">
                             <input v-model="mTitle" class="form-control" type="text" name="title" :id="'text-' + $.vnode.key + 'field'">
@@ -153,6 +169,7 @@
 		  	        return {
 		  	            socials: JSON.parse(document.getElementById('social_list').textContent),
 		  	            adapters: JSON.parse(document.getElementById('adapters').textContent),
+		  	            bots_by_adapter: JSON.parse(document.getElementById('bots_by_adapter').textContent),
 		  	            uncollapsed_component: null,
 		  	        };
 			      },
@@ -163,10 +180,12 @@
 			              v-for="social in socials"
 			              :key="social.pk"
 			              :adapter="social.adapter"
+			              :bot="social.bot"
 			              :title="social.title"
 			              :credentials="JSON.stringify(social.credentials)"
 			              @toggle="toggle"
 			              :adapters="adapters"
+			              :bots-by-adapter="bots_by_adapter"
 			              :is-new="social.isNew == undefined ? false : social.isNew"
 			          ></social-component>
   			    `,
@@ -184,6 +203,7 @@
                     if (this.socials.length == 0 || this.socials[0].pk) {
                         this.socials.unshift({
                             adapter: '',
+                            bot: '',
                             description: '',
                             title: '',
                             pk: '',

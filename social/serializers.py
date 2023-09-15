@@ -8,7 +8,7 @@ from social.models import Social
 class SocialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Social
-        fields = ['title', 'adapter', 'credentials']
+        fields = ['title', 'adapter', 'credentials', 'bot']
 
     def validate(self, data):
         from social.adapters import adapter_name_to_class

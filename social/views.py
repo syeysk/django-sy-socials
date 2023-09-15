@@ -32,14 +32,19 @@ class ListSocialsView(APIView):
                 service_map = auto_schema.map_serializer(service_serializer())
                 serializer_maps[subclass_name] = service_map['properties']
 
+        fields = ['credentials', 'pk'] if request.user.is_authenticated else []
+        socials = [
+            dict(social) for social in page.object_list.values('title', 'adapter', 'bot', *fields)
+        ]
         context = {
-            'socials': [dict(social) for social in page.object_list.values('title', 'credentials', 'adapter', 'pk')],
+            'socials': socials,
             'adapters': get_adapter_names(),
             'serializer_maps': serializer_maps,
             'bots_by_adapter': bots_by_adapter,
         }
-        for social in context['socials']:
-            social['credentials'] = json.loads(social['credentials']) if social['credentials'] else {}
+        if 'credentials' in fields:
+            for social in context['socials']:
+                social['credentials'] = json.loads(social['credentials']) if social['credentials'] else {}
 
         return render(request, 'social/social_list.html', context)
 
@@ -79,7 +84,7 @@ class ListSocialsView(APIView):
 class HookBotView(APIView):
     def post(self, request, pk):
         social = Social.objects.get(pk=pk)
-        bot_class = bot_name_to_class(social.adapter, 'knowledge_searcher_bot')
+        bot_class = bot_name_to_class(social.adapter, social.bot)
         credentials = json.loads(social.credentials)
         bot = bot_class(**credentials)
         if hasattr(bot, 'verify_hook'):

@@ -4,7 +4,7 @@ from social.adapters.discord_adapter import DiscordAdapter
 
 
 def adapter_name_to_class(adapter_name):
-    return globals()['{}Adapter'.format(adapter_name)]
+    return globals()[f'{adapter_name}Adapter']
 
 
 def get_adapter_names(add_class=False):
