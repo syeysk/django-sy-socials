@@ -116,5 +116,5 @@ class SetHookView(APIView):
         bot_class = bot_name_to_class(social.adapter, social.bot)
         credentials = json.loads(social.credentials)
         bot = bot_class(social, **credentials)
-        hook_url = '{}{}'.format(settings.SITE_URL, resolve_url('set_hook', pk=pk))
+        hook_url = '{}{}'.format(settings.SITE_URL, resolve_url('hook', pk=pk))
         return Response(status=status.HTTP_200_OK, data={'ok': bot.set_hook(hook_url)})
