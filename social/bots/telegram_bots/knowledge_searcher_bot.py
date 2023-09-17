@@ -36,9 +36,9 @@ def build_message_body(result_data):
     numeration_from = (result_data['page_number'] - 1) * result_data['count_on_page'] + 1
     for index, result in enumerate(results, numeration_from):
         title = result['title']
-        quoted_title = quote(title)
         note_url = result['url']
-        links.append(f'{index}. [{title}]({note_url}db/{quoted_title}.md)')
+        source = quote(result_data['source'])
+        links.append(f'{index}. [{title}]({note_url}?source={source})')
 
     links = '\n'.join(links)
     count = result_data['count']
