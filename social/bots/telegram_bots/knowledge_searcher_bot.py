@@ -77,7 +77,7 @@ def process_message(message, is_from_chat, url, source):
             'reply_to_message_id': message['message_id'],
             'disable_web_page_preview': True,
             'parse_mode': 'Markdown',
-            'reply_markup': build_paginator_params(result_data['pages']),
+            'reply_markup': build_paginator_params(result_data['pages']) if result_data else None,
         }
         requests.post(f'{url}/sendMessage', json=params)
 
@@ -92,7 +92,7 @@ def process_callback(callback_query, url, source):
 
     result_data = note_search(query, page_number=page_num, source=source)
 
-    reply_markup = build_paginator_params(result_data['pages'], page_num)
+    reply_markup = build_paginator_params(result_data['pages'], page_num) if result_data else None
     params = {
         'chat_id': results_message.get('chat').get('id'),
         'message_id': results_message.get('message_id'),
