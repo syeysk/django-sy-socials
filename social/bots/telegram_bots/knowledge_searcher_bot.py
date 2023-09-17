@@ -63,13 +63,13 @@ def build_paginator_params(count_pages, page_num=1):
     }
 
 
-def process_message(message, is_from_chat, url):
+def process_message(message, is_from_chat, url, source):
     message_text = message.get('text', '')
     if is_from_chat and message_text.startswith('.s '):
         message_text = message_text[3:]
 
     if message_text:
-        result_data = note_search(message_text)
+        result_data = note_search(message_text, source=source)
         params = {
             'chat_id': message['chat']['id'],
             'text': build_message_body(result_data),
@@ -81,7 +81,7 @@ def process_message(message, is_from_chat, url):
         requests.post(f'{url}/sendMessage', json=params)
 
 
-def process_callback(callback_query, url):
+def process_callback(callback_query, url, source):
     results_message = callback_query['message']
     page_num = int(callback_query['data'])
 
@@ -89,7 +89,7 @@ def process_callback(callback_query, url):
     if query.startswith('.s '):
         query = query[3:]
 
-    result_data = note_search(query, page_number=page_num)
+    result_data = note_search(query, page_number=page_num, source=source)
 
     reply_markup = build_paginator_params(result_data['pages'], page_num)
     params = {
@@ -108,15 +108,16 @@ class KnowledgeSearcherBot(TelegramAdapter):
     serializer = KnowledgeSearcherTelegramSerializer
 
     def hook_view(self, request):
+        source = self.social.bot_settings.get('default_source')
         message = request.data.get('message') or request.data.get('channel_post')
         if message:
-            process_message(message, 'channel_post' in request.data, self.url)
+            process_message(message, 'channel_post' in request.data, self.url, source)
 
         callback_query = request.data.get('callback_query')
         if callback_query:
             if callback_query['data'] == 'none':
                 return Response(status=status.HTTP_200_OK, data={})
 
-            process_callback(callback_query, self.url)
+            process_callback(callback_query, self.url, source)
 
         return Response(status=status.HTTP_200_OK, data={})
