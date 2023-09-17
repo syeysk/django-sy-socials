@@ -26,7 +26,7 @@ def note_search(query, search_by='all', operator='or', count_on_page=15, page_nu
     query = quote(query, safe='')
     response = api.note.search.get(f'/{query}/', params=params)
     if response.status_code != 200:
-        raise Exception(f'status code is {response.status_code} {response.content}')
+        return None
 
     return response.json()
 
@@ -73,7 +73,7 @@ def process_message(message, is_from_chat, url, source):
         result_data = note_search(message_text, source=source)
         params = {
             'chat_id': message['chat']['id'],
-            'text': build_message_body(result_data),
+            'text': build_message_body(result_data) if result_data else 'Ошибка сервера',
             'reply_to_message_id': message['message_id'],
             'disable_web_page_preview': True,
             'parse_mode': 'Markdown',
@@ -96,7 +96,7 @@ def process_callback(callback_query, url, source):
     params = {
         'chat_id': results_message.get('chat').get('id'),
         'message_id': results_message.get('message_id'),
-        'text': build_message_body(result_data),
+        'text': build_message_body(result_data) if result_data else 'Ошибка сервера',
         'disable_web_page_preview': True,
         'parse_mode': 'Markdown',
         'reply_markup': reply_markup,
