@@ -23,7 +23,7 @@ def note_search(query, search_by='all', operator='or', count_on_page=15, page_nu
         params['source'] = source
 
     api = API('1', 'note')
-    response = api.note.search.get(f'/{query}', params=params)
+    response = api.note.search.get(f'/{query}/', params=params)
     if response.status_code != 200:
         raise Exception(f'status code is {response.status_code} {response.content}')
 
@@ -38,7 +38,7 @@ def build_message_body(result_data):
         title = result['title']
         note_url = result['url']
         source = quote(result_data['source'])
-        links.append(f'{index}. [{title}]({note_url}/?source={source})')
+        links.append(f'{index}. [{title}]({note_url}?source={source})')
 
     links = '\n'.join(links)
     count = result_data['count']
