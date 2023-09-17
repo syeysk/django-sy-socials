@@ -146,10 +146,19 @@
                 },
             },
             template: `
+                <br><br>
                 <div style="cursor: pointer;" @click="toggle">
                     [[mTitle]]
                 </div>
-                <form v-if="!collapsed">
+                <form v-if="!collapsed" style="padding-left: 15px;">
+
+                    <div class="mb-3 form-group" id="title-group">
+                        <div class="form-floating">
+                            <input v-model="mTitle" class="form-control" type="text" name="title" :id="'text-' + $.vnode.key + 'field'">
+                            <label :for="'title-' + $.vnode.key + 'field'" class="form-label">Заголовок аккаунта</label>
+                         </div>
+                    </div>
+
                     <div class="mb-3 form-group" id="adapter-group">
   					            <div class="form-floating">
                             <select :disabled="!mIsNew" v-model="mAdapter" class="form-select" id="adapter-field">
@@ -177,13 +186,6 @@
                         </div>
                     </div>
                     <input type="hidden" name="bot" v-model="mBot">
-
-                    <div class="mb-3 form-group" id="title-group">
-                        <div class="form-floating">
-                            <input v-model="mTitle" class="form-control" type="text" name="title" :id="'text-' + $.vnode.key + 'field'">
-                            <label :for="'title-' + $.vnode.key + 'field'" class="form-label">Заголовок аккаунта</label>
-                         </div>
-                    </div>
 
                     <div v-if="is_authenticated">
 												<span v-if="serializer_maps[mAdapter]">Данные для подключения:</span>

@@ -19,8 +19,11 @@ class ListSocialsView(APIView):
         count_on_page = request.GET.get('count', 10)
         page_number = request.GET.get('p', 1)
 
-        notes = Social.objects.order_by('-pk')
-        paginator = Paginator(notes, count_on_page)
+        socials = Social.objects.order_by('-pk')
+        if request.user.is_authenticated:
+            socials = socials.filter(created_by=request.user)
+
+        paginator = Paginator(socials, count_on_page)
         page = paginator.page(page_number)
 
         auto_schema = AutoSchema()
