@@ -27,24 +27,33 @@ class ListSocialsView(APIView):
         page = paginator.page(page_number)
 
         auto_schema = AutoSchema()
-        serializer_maps = {}
+        adapter_maps = {}
         bots_by_adapter = {}
-        for subclass_name, subclass in get_adapter_names(True):
-            bots_by_adapter[subclass_name] = get_bot_names(subclass_name)
-            service_serializer = getattr(subclass, 'serializer', None)
-            if service_serializer:
-                service_map = auto_schema.map_serializer(service_serializer())
-                serializer_maps[subclass_name] = service_map['properties']
+        bot_maps_by_adapter = {}
+        for adapter_name, adapter_class in get_adapter_names(True):
+            adapter_serializer = getattr(adapter_class, 'serializer', None)
+            if adapter_serializer:
+                adapter_map = auto_schema.map_serializer(adapter_serializer())
+                adapter_maps[adapter_name] = adapter_map['properties']
 
-        fields = ['credentials', 'pk'] if request.user.is_authenticated else []
+            bot_maps_by_adapter[adapter_name] = {}
+            bots_by_adapter[adapter_name] = get_bot_names(adapter_name)
+            for bot_name, bot_class in get_bot_names(adapter_name, True):
+                bot_serializer = getattr(bot_class, 'serializer', None)
+                if bot_serializer:
+                    bot_map = auto_schema.map_serializer(bot_serializer())
+                    bot_maps_by_adapter[adapter_name][bot_name] = bot_map['properties']
+
+        fields = ['credentials', 'bot_settings', 'pk'] if request.user.is_authenticated else []
         socials = [
             dict(social) for social in page.object_list.values('title', 'adapter', 'bot', *fields)
         ]
         context = {
             'socials': socials,
             'adapters': get_adapters_properties(),
-            'serializer_maps': serializer_maps,
+            'serializer_maps': adapter_maps,
             'bots_by_adapter': bots_by_adapter,
+            'bot_maps_by_adapter': bot_maps_by_adapter,
         }
         if 'credentials' in fields:
             for social in context['socials']:
@@ -71,16 +80,24 @@ class ListSocialsView(APIView):
                 name for name, value in json.loads(serializer.validated_data['credentials']).items()
                 if json.loads(instance.credentials).get(name) != value
             ]
+            updated_bot_settings_fields = [
+                name for name, value in serializer.validated_data['bot_settings'].items()
+                if instance.bot_settings.get(name) != value
+            ]
             serializer.save()
         else:
             serializer = SocialSerializer(data=request.POST)
             serializer.is_valid(raise_exception=True)
             updated_fields = serializer.fields.keys()
             updated_cred_fields = json.loads(serializer.validated_data['credentials']).keys()
+            updated_bot_settings_fields = serializer.validated_data['bot_settings'].keys()
             instance = serializer.save(created_by=request.user)
 
         response_data = {
-            'id': instance.pk, 'updated_fields': updated_fields, 'updated_cred_fields': updated_cred_fields,
+            'id': instance.pk,
+            'updated_fields': updated_fields,
+            'updated_cred_fields': updated_cred_fields,
+            'updated_bot_settings_fields': updated_bot_settings_fields,
         }
         return Response(status=status.HTTP_200_OK, data=response_data)
 

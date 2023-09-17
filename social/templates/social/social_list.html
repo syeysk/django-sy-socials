@@ -5,14 +5,13 @@
 {% block page_title %}Соц. сети{% endblock %}
 
 {% block start_of_head %}
+    {{ block.super }}
     <script src="{% static 'base/extern/codemirror-5.65.14/lib/codemirror.js' %}"></script>
     <link rel="stylesheet" href="{% static 'base/extern/codemirror-5.65.14/lib/codemirror.css' %}">
     <script src="{% static 'base/extern/codemirror-5.65.14/mode/javascript/javascript.js' %}"></script>
     <script src="{% static 'base/code-mirror-component.js' %}"></script>
     <script src="{% static 'base/map-field-component.js' %}"></script>
     <script src="{% static 'base/map-serializer-component.js' %}"></script>
-    <script src="{% static 'base/windows.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'base/windows.css' %}">
 {% endblock %}
 
 
@@ -21,6 +20,7 @@
     {{ adapters|json_script:'adapters' }}
     {{ serializer_maps|json_script:'serializer_maps' }}
     {{ bots_by_adapter|json_script:'bots_by_adapter' }}
+    {{ bot_maps_by_adapter|json_script:'bot_maps_by_adapter' }}
 		<script>
 			  var URL_ADD_SOCIAL = '';
 			  URL_CHECK_HOOK = 'check_hook/';
@@ -40,7 +40,7 @@
 
 		<script>
         SocialComponent = {
-            props: ['adapter', 'bot', 'title', 'isNew', 'adapters', 'credentials', 'botsByAdapter'],
+            props: ['adapter', 'bot', 'title', 'isNew', 'adapters', 'credentials', 'botsByAdapter', 'botSettings'],
             data() {
                 return {
                     collapsed: this.isNew ? false : true,
@@ -48,10 +48,12 @@
                     mAdapter: this.adapter,
                     mBot: this.bot,
                     mCredentials: this.credentials,
+                    mBotSettings: JSON.stringify(this.botSettings),
                     mTitle: this.title,
                     is_authenticated: this.credentials != undefined,
                     badMessage: '',
                     serializer_maps: JSON.parse(document.getElementById('serializer_maps').textContent),
+                    bot_maps_by_adapter: JSON.parse(document.getElementById('bot_maps_by_adapter').textContent),
                 };
             },
             emits: ['toggle'],
@@ -73,12 +75,17 @@
                             clear_status_fields(form);
                             set_valid_field(form, result.updated_fields);
 
-                            console.log('cred', result.updated_cred_fields);
                             let updated_cred_fields = result.updated_cred_fields;
                             for (let index=0; index < updated_cred_fields.length; index++) {
                                 updated_cred_fields[index] = 'cred-' + updated_cred_fields[index];
                             }
                             set_valid_field(form, updated_cred_fields);
+
+                            let updated_bsets_fields = result.updated_bot_settings_fields;
+                            for (let index=0; index < updated_bsets_fields.length; index++) {
+                                updated_bsets_fields[index] = 'bsets-' + updated_bsets_fields[index];
+                            }
+                            set_valid_field(form, updated_bsets_fields);
 
                             self.$.vnode.key = result.id;
                             self.mIsNew = false;
@@ -99,6 +106,15 @@
                                         cred_fields_with_prefix['cred-' + field_name] = cred_fields[field_name];
                                     }
                                     set_invalid_field(form, cred_fields_with_prefix);
+                                }
+
+                                let bsets_fields_with_prefix = {};
+                                let bsets_fields = xhr.responseJSON['bot_settings'];
+                                if (bsets_fields) {
+                                    for (field_name in bsets_fields) {
+                                        bsets_fields_with_prefix['bsets-' + field_name] = bsets_fields[field_name];
+                                    }
+                                    set_invalid_field(form, bsets_fields_with_prefix);
                                 }
 
                                 self.badMessage = ''
@@ -146,7 +162,6 @@
                 },
             },
             template: `
-                <br><br>
                 <div style="cursor: pointer;" @click="toggle">
                     [[mTitle]]
                 </div>
@@ -190,14 +205,24 @@
                     <div v-if="is_authenticated">
 												<span v-if="serializer_maps[mAdapter]">Данные для подключения:</span>
 												<map-serializer-component
-														v-if="!collapsed"
+														v-if="!collapsed && serializer_maps[mAdapter]"
 														:serializer-map="serializer_maps[mAdapter]"
 														v-model="mCredentials"
 														:use-default-value="isNew"
 														name="credentials"
 												></map-serializer-component>
 
-												<br>
+                        <span v-if="serializer_maps[mAdapter]">Настройки бота:</span>
+												<map-serializer-component
+														v-if="!collapsed && bot_maps_by_adapter[mAdapter]"
+														:serializer-map="bot_maps_by_adapter[mAdapter][mBot]"
+														v-model="mBotSettings"
+														:use-default-value="isNew"
+														name="bot_settings"
+														field-name-prefix="bsets-"
+												></map-serializer-component>
+
+                        <br>
 
 												<div v-if="(mAdapter && !mIsNew) ? adapters[mAdapter].has_hook_buttons : false">
 														<input type="button" value="Установить хук микросервиса" class="btn btn-secondary" @click="set_hook" v-if="adapters[mAdapter].has_hook_buttons.set">
@@ -235,6 +260,7 @@
 			      components: {SocialComponent},
 			      template: `
 			          <button @click="add">Добавить аккаунт</button>
+			          <br><br>
 			          <social-component
 			              v-for="social in socials"
 			              :key="social.pk"
@@ -242,6 +268,7 @@
 			              :bot="social.bot"
 			              :title="social.title"
 			              :credentials="JSON.stringify(social.credentials)"
+			              :botSettings="social.bot_settings"
 			              @toggle="toggle"
 			              :adapters="adapters"
 			              :bots-by-adapter="bots_by_adapter"
@@ -268,6 +295,7 @@
                             pk: '',
                             isNew: true,
                             credentials: {},
+                            bot_settings: {},
                         });
                     }
                 }

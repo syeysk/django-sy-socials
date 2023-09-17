@@ -6,6 +6,7 @@ from rest_framework import status
 
 from django_sy_framework.utils.universal_api import API
 from social.adapters import TelegramAdapter
+from social.serializers_bot import KnowledgeSearcherTelegramSerializer
 
 DEFAULT_COUNT_ON_PAGE = 10
 
@@ -104,6 +105,7 @@ def process_callback(callback_query, url):
 
 class KnowledgeSearcherBot(TelegramAdapter):
     verbose_name = 'Поисковик по базе знаний'
+    serializer = KnowledgeSearcherTelegramSerializer
 
     def hook_view(self, request):
         message = request.data.get('message') or request.data.get('channel_post')
