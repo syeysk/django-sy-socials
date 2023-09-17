@@ -108,7 +108,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
     serializer = KnowledgeSearcherTelegramSerializer
 
     def hook_view(self, request):
-        source = self.social.bot_settings.get('default_source')
+        source = self.social.bot_settings.get('default_source') or None
         message = request.data.get('message') or request.data.get('channel_post')
         if message:
             process_message(message, 'channel_post' in request.data, self.url, source)
