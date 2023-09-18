@@ -108,7 +108,7 @@ def build_start_message(message, source):
         'Микросервис заметок является малой частью большой Платформы межкомандного взаимодействия \\- '
         'экспериментального результата коллективных обсуждений\\.\n\n'
         'Принять участие в обсуждениях можете и Вы, например, написав свои идеи и предложения в чате, '
-        'к которому подключён данный бот\\.\n\n'
+        'к которому подключён бот\\.\n\n'
         'Спасибо \\:З'
     )
     return {
@@ -160,7 +160,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
         :return: False if unsuccess, True if success. Or tupple of (True/False, 'message text')
         """
         commands = [
-            {'command': 'start', 'description': 'о боте поиска по базе знаний.'},
+            {'command': 'start', 'description': 'о боте поиска по базе знаний'},
             {'command': 's', 'description': 'ищет в базе знаний'},
         ]
         tg_response = self.set_my_commands({'commands': commands})

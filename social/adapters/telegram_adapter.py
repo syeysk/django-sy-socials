@@ -49,6 +49,8 @@ class TelegramAdapter(BaseAdapter):
                     '{}{}'.format(text[:offset], text[length:]).strip(),
                 ) if return_cleared_text else command[1:]
 
+        return (None, None) if return_cleared_text else None
+
     def set_hook(self, url):
         secret_token = str(uuid.uuid4())
         self.social.any_data['secret_token'] = secret_token
