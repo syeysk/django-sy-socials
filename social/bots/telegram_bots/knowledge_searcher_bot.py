@@ -31,14 +31,25 @@ def note_search(query, search_by='all', operator='or', count_on_page=15, page_nu
     return response.json()
 
 
+def escape_url_parts(string: str):
+    return string.replace(')', '\\)').replace('\\', '\\\\)')
+
+
+def escape_other_parts(string: str):
+    for symbol in '_*[]()~`>#+-=|{}.!':
+        string = string.replace(symbol, f'\\{symbol}')
+
+    return string
+
+
 def build_message_body(result_data):
     links = []
     results = result_data['results']
     numeration_from = (result_data['page_number'] - 1) * result_data['count_on_page'] + 1
     for index, result in enumerate(results, numeration_from):
-        title = result['title']
-        note_url = result['url']
-        source = quote(result_data['source'])
+        title = escape_other_parts(result['title'])
+        note_url = escape_url_parts(result['url'])
+        source = escape_url_parts(quote(result_data['source']))
         links.append(f'{index}. [{title}]({note_url}?source={source})')
 
     links = '\n'.join(links)
