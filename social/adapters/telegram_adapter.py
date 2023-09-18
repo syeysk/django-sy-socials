@@ -3,6 +3,7 @@ import uuid
 import requests
 
 from social.adapters.base_adapter import BaseAdapter
+from social.logger import logger
 from social.serializers_adapter import TelegramSerializer
 
 
@@ -47,3 +48,13 @@ class TelegramAdapter(BaseAdapter):
 
     def delete_hook(self):
         ...
+
+    def send_message(self, params):
+        response = requests.post(f'{self.url}/sendMessage', json=params)
+        if response.status_code != 200:
+            logger.debug(f'Error during sending message: {response.content}\n\n')
+
+    def edit_message(self, params):
+        response = requests.post(f'{self.url}/editMessageText', json=params)
+        if response.status_code != 200:
+            logger.debug(f'Error during editing message: {response.content}\n\n')

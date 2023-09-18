@@ -1,11 +1,11 @@
 from urllib.parse import quote
 
-import requests
 from rest_framework.response import Response
 from rest_framework import status
 
 from django_sy_framework.utils.universal_api import API
 from social.adapters import TelegramAdapter
+
 from social.serializers_bot import KnowledgeSearcherTelegramSerializer
 
 DEFAULT_COUNT_ON_PAGE = 10
@@ -50,8 +50,8 @@ def build_message_body(result_data):
     numeration_from = (result_data['page_number'] - 1) * result_data['count_on_page'] + 1
     for index, result in enumerate(results, numeration_from):
         title = escape_other_parts(result['title'])
-        note_url = escape_url_parts(result['url'])
-        source = escape_url_parts(quote(result_data['source']))
+        note_url = escape_other_parts(result['url'])
+        source = escape_other_parts(quote(result_data['source']))
         links.append(f'{index}\\. [{title}]({note_url}?source={source})')
 
     links = '\n'.join(links)
@@ -77,7 +77,7 @@ def build_paginator_params(count_pages, page_num=1):
     }
 
 
-def process_message(message, is_from_chat, url, source):
+def process_message(message, is_from_chat, source):
     message_text = message.get('text', '')
     if is_from_chat and message_text.startswith('.s '):
         message_text = message_text[3:]
@@ -94,10 +94,10 @@ def process_message(message, is_from_chat, url, source):
         if result_data:
             params['reply_markup'] = build_paginator_params(result_data['pages'])
 
-        requests.post(f'{url}/sendMessage', json=params)
+        return params
 
 
-def process_callback(callback_query, url, source):
+def process_callback(callback_query, source):
     results_message = callback_query['message']
     page_num = int(callback_query['data'])
 
@@ -117,7 +117,7 @@ def process_callback(callback_query, url, source):
     if result_data:
         params['reply_markup'] = build_paginator_params(result_data['pages'], page_num)
 
-    requests.post(f'{url}/editMessageText', json=params)
+    return params
 
 
 class KnowledgeSearcherBot(TelegramAdapter):
@@ -128,13 +128,16 @@ class KnowledgeSearcherBot(TelegramAdapter):
         source = self.social.bot_settings.get('default_source') or None
         message = request.data.get('message') or request.data.get('channel_post')
         if message:
-            process_message(message, 'channel_post' in request.data, self.url, source)
+            params = process_message(message, 'channel_post' in request.data, source)
+            if params:
+                self.send_message(params)
 
         callback_query = request.data.get('callback_query')
         if callback_query:
             if callback_query['data'] == 'none':
                 return Response(status=status.HTTP_200_OK, data={})
 
-            process_callback(callback_query, self.url, source)
+            params = process_callback(callback_query, source)
+            self.edit_message(params)
 
         return Response(status=status.HTTP_200_OK, data={})
