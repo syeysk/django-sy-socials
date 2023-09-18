@@ -157,7 +157,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
                 for command in json_data['result']:
                     commands_lines.append('<b>/{command}</b> - {description}'.format(**command))
 
-                return True, tg_response.content#'<br>'.join(commands_lines) if commands_lines else 'Команды не установлены'
+                return True, '<br>'.join(commands_lines) if commands_lines else 'Команды не установлены'
 
         logger.error(f'unknown answer in get_commands of KnowledgeSearcherBot: {tg_response.content}')
 
