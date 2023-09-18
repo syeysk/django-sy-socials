@@ -12,6 +12,12 @@ class TelegramAdapter(BaseAdapter):
     verbose_name = 'Telegram'
     serializer = TelegramSerializer
     url_template = 'https://api.telegram.org/bot{}'
+    buttons = [
+        {
+            'btn_set_hook': {'verbose_name': 'Установить хук микросервиса'},
+            'btn_check_hook': {'verbose_name': 'Проверить правильность хука'},
+        },
+    ]
 
     def __init__(self, *args, token, bot_username):
         super().__init__(*args)
@@ -51,22 +57,34 @@ class TelegramAdapter(BaseAdapter):
 
         return (None, None) if return_cleared_text else None
 
-    def set_hook(self, url):
+    def btn_set_hook(self):
         secret_token = str(uuid.uuid4())
         self.social.any_data['secret_token'] = secret_token
-        response = requests.post(f'{self.url}/setWebhook', json={'url': url, 'secret_token': secret_token})
+        response = requests.post(
+            f'{self.url}/setWebhook',
+            json={'url': self.social.hook_url, 'secret_token': secret_token},
+        )
         if response.status_code == 200:
             response_json = response.json()
             if response_json['ok']:
                 self.social.save()
-                return True
+                return True, 'Хук успешно установлен'
 
-    def get_hook(self):
+        logger.error(f'Error in `btn_set_hook`: {response.content}\n\n')
+
+    def btn_check_hook(self):
         response = requests.post(f'{self.url}/getWebhookInfo')
         if response.status_code == 200:
             response_json = response.json()
             if response_json['ok']:
-                return response_json['result']['url']
+                is_hook_true = response_json['result']['url'] == self.social.hook_url
+                message = (
+                    'Хук установлен правильно'
+                    if is_hook_true else 'Хук неверный. Для работы бота, пожалуйста, установите хук'
+                )
+                return is_hook_true, message
+
+        logger.error(f'Error in `btn_check_hook`: {response.content}\n\n')
 
     def delete_hook(self):
         ...

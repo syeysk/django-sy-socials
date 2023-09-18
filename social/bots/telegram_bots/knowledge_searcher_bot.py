@@ -146,14 +146,14 @@ def process_callback(callback_query, source):
 class KnowledgeSearcherBot(TelegramAdapter):
     verbose_name = 'Поисковик по базе знаний'
     serializer = KnowledgeSearcherTelegramSerializer
-    buttons = [
+    buttons = TelegramAdapter.buttons + [
         {
-            'set_commands': {'verbose_name': 'Установить команды'},
-            'get_commands': {'verbose_name': 'Посмотреть команды'},
+            'btn_set_commands': {'verbose_name': 'Установить команды'},
+            'btn_get_commands': {'verbose_name': 'Посмотреть команды'},
         },
     ]
 
-    def set_commands(self):
+    def btn_set_commands(self):
         """
 
         :param request:
@@ -170,7 +170,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
 
         logger.error(f'unknown answer in set_commands of KnowledgeSearcherBot: {tg_response.content}')
 
-    def get_commands(self):
+    def btn_get_commands(self):
         tg_response = self.get_my_commands({})
         if tg_response.status_code == 200:
             json_data = tg_response.json()

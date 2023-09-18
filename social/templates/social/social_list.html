@@ -24,21 +24,11 @@
     {{ buttons|json_script:'buttons' }}
 		<script>
 			  var URL_ADD_SOCIAL = '';
-			  URL_CHECK_HOOK = 'check_hook/';
-			  URL_SET_HOOK = 'set_hook/';
 			  URL_RUN_BUTTON = 'run_button/';
         var CSRF_TOKEN = "{{ csrf_token }}";
 		</script>
 
     <div id="app_social_list_id"></div>
-
-    <div class="windowBody" id="check_hook">
-		  	Установлен следующий хук-URL: <span class="hook_url"></span>
-		</div>
-
-    <div class="windowBody" id="set_hook">
-		  	<span class="result"></span>
-		</div>
 
     <div class="windowBody" id="run_button">
 		  	<span class="result"></span>
@@ -132,40 +122,6 @@
                         method: "post"
                     });
                 },
-                check_hook(event) {
-                    $.ajax({
-                        url: URL_CHECK_HOOK + this.$.vnode.key,
-                        headers: {"X-CSRFToken": CSRF_TOKEN},
-                        success: function(result) {
-                            wbody = W.open('check_hook', {text_title: 'Проверка правильности хука'})
-                            wbody.querySelector('.hook_url').textContent = result.hook_url;
-                            self.badMessage = '';
-                        },
-                        statusCode: {
-                            500: function(xhr) {
-                                self.badMessage = 'ошибка сервера'
-                            },
-                        },
-                        method: "post"
-                    });
-                },
-                set_hook(event) {
-                    $.ajax({
-                        url: URL_SET_HOOK + this.$.vnode.key,
-                        headers: {"X-CSRFToken": CSRF_TOKEN},
-                        success: function(result) {
-                            wbody = W.open('set_hook', {text_title: 'Установка хука микросервиса'})
-                            wbody.querySelector('.result').textContent = result.ok ? 'Хук установлен' : 'Ошибка установки хука';
-                            self.badMessage = '';
-                        },
-                        statusCode: {
-                            500: function(xhr) {
-                                self.badMessage = 'ошибка сервера'
-                            },
-                        },
-                        method: "post"
-                    });
-                },
                 run_button(event) {
                     let btn = event.target;
                     $.ajax({
@@ -203,10 +159,10 @@
   					            <div class="form-floating">
                             <select :disabled="!mIsNew" v-model="mAdapter" class="form-select" id="adapter-field">
                                 <option
-                                    v-for="(properties, adapter_name) in adapters"
-                                    :value="adapter_name"
-                                    :selected="adapter_name == mAdapter"
-                                >[[ properties.verbose_name ]]</option>
+                                    v-for="adapter in adapters"
+                                    :value="adapter[0]"
+                                    :selected="adapter[0] == mAdapter"
+                                >[[ adapter[1] ]]</option>
                             </select>
                             <label for="adapter-field">Адаптер соцсетей</label>
                         </div>
@@ -249,21 +205,14 @@
 
                         <br>
 
-												<div v-if="(mAdapter && !mIsNew) ? adapters[mAdapter].has_hook_buttons : false">
-														<input type="button" value="Установить хук микросервиса" class="btn btn-secondary" @click="set_hook" v-if="adapters[mAdapter].has_hook_buttons.set">
-														&nbsp;
-														<input type="button" value="Проверить правильность хука" class="btn btn-secondary" @click="check_hook" v-if="adapters[mAdapter].has_hook_buttons.get">
-														<!--
-														<input type="button" value="Удалить" class="btn btn-secondary" @click="delete_hook" v-if="adapters[mAdapter].has_hook_buttons.delete">
-														-->
-														<br>
+												<div v-if="mAdapter && !mIsNew">
 														<div v-for="bot_buttons in buttons[mAdapter][mBot]">
+															  <br>
 														    <span v-for="(button, button_name) in bot_buttons">
     														    <input type="button" :value="button.verbose_name" :data-button="button_name" class="btn btn-secondary" @click="run_button">
 		    											    	&nbsp;
 														    </span>
     												</div>
-
 												</div>
 
 												<br>

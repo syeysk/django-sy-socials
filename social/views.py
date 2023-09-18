@@ -8,7 +8,7 @@ from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 from rest_framework import status
 
-from social.adapters import get_adapter_names, get_adapters_properties
+from social.adapters import get_adapter_names
 from social.bots import bot_name_to_class, get_bot_names
 from social.models import Social
 from social.serializers import SocialSerializer
@@ -53,7 +53,7 @@ class ListSocialsView(APIView):
         ]
         context = {
             'socials': socials,
-            'adapters': get_adapters_properties(),
+            'adapters': get_adapter_names(),
             'serializer_maps': adapter_maps,
             'bots_by_adapter': bots_by_adapter,
             'bot_maps_by_adapter': bot_maps_by_adapter,
@@ -117,31 +117,6 @@ class HookBotView(APIView):
                 return Response(status=status.HTTP_403_FORBIDDEN)
 
         return bot.hook_post_view(request)
-
-
-class CheckHookView(APIView):
-    def post(self, request, pk):
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        social = Social.objects.get(pk=pk, created_by=request.user)
-        bot_class = bot_name_to_class(social.adapter, social.bot)
-        credentials = json.loads(social.credentials)
-        bot = bot_class(social, **credentials)
-        return Response(status=status.HTTP_200_OK, data={'hook_url': bot.get_hook()})
-
-
-class SetHookView(APIView):
-    def post(self, request, pk):
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        social = Social.objects.get(pk=pk, created_by=request.user)
-        bot_class = bot_name_to_class(social.adapter, social.bot)
-        credentials = json.loads(social.credentials)
-        bot = bot_class(social, **credentials)
-        hook_url = '{}{}'.format(settings.SITE_URL, resolve_url('hook', pk=pk))
-        return Response(status=status.HTTP_200_OK, data={'ok': bot.set_hook(hook_url)})
 
 
 class RunButtonView(APIView):
