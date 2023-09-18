@@ -111,7 +111,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
     verbose_name = 'Поисковик по базе знаний'
     serializer = KnowledgeSearcherTelegramSerializer
 
-    def hook_view(self, request):
+    def hook_post_view(self, request):
         source = self.social.bot_settings.get('default_source') or None
         message = request.data.get('message') or request.data.get('channel_post')
         if message:

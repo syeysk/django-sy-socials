@@ -112,7 +112,7 @@ class HookBotView(APIView):
             if not bot.verify_hook(request):
                 return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return bot.hook_view(request)
+        return bot.hook_post_view(request)
 
 
 class CheckHookView(APIView):

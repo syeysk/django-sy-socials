@@ -1,1 +1,2 @@
 from social.bots.telegram_bots.knowledge_searcher_bot import KnowledgeSearcherBot
+from social.bots.telegram_bots.inform_pages_bot import InformPagesBot
