@@ -46,7 +46,7 @@ class TelegramAdapter(BaseAdapter):
 
                 return (
                     command[1:],
-                    '{}{}'.format(text[:offset], text[length:]),
+                    '{}{}'.format(text[:offset], text[length:]).strip(),
                 ) if return_cleared_text else command[1:]
 
     def set_hook(self, url):

@@ -79,6 +79,14 @@ def build_paginator_params(count_pages, page_num=1):
 
 
 def build_search_result_message(message, message_text, source):
+    if not message_text:
+        return {
+            'chat_id': message['chat']['id'],
+            'text': 'для поиска введите `\\/s фраза для поиска`',
+            'reply_to_message_id': message['message_id'],
+            'parse_mode': 'MarkdownV2',
+        }
+
     result_data = note_search(message_text, source=source)
     params = {
         'chat_id': message['chat']['id'],
@@ -96,12 +104,12 @@ def build_search_result_message(message, message_text, source):
 def build_start_message(message, source):
     text = (
         f'Бот поиска по Базе знаний `{source}` микросервиса заметок `cachebrain\\.fun`\n\n'
-        'Добавлять заметки может любой зарегистрированный пользователь.\n'
-        'Микросервис заметок является малой частью большой Платформы межкомандного взаимодействия - '
-        'экспериментального результата коллективных обсуждений.\n\n'
+        'Добавлять заметки может любой зарегистрированный пользователь\\.\n'
+        'Микросервис заметок является малой частью большой Платформы межкомандного взаимодействия \\- '
+        'экспериментального результата коллективных обсуждений\\.\n\n'
         'Принять участие в обсуждениях можете и Вы, например, написав свои идеи и предложения в чате, '
-        'к которому подключён данный бот.\n\n'
-        'Спасибо :З'
+        'к которому подключён данный бот\\.\n\n'
+        'Спасибо \\:З'
     )
     return {
         'chat_id': message['chat']['id'],
@@ -152,8 +160,8 @@ class KnowledgeSearcherBot(TelegramAdapter):
         :return: False if unsuccess, True if success. Or tupple of (True/False, 'message text')
         """
         commands = [
-            {'command': 'start', 'description': 'О боте поиска по базе знаний.'},
-            {'command': 's', 'description': 'Ищет в базе знаний'},
+            {'command': 'start', 'description': 'о боте поиска по базе знаний.'},
+            {'command': 's', 'description': 'ищет в базе знаний'},
         ]
         tg_response = self.set_my_commands({'commands': commands})
         if tg_response.status_code == 200:
@@ -180,7 +188,7 @@ class KnowledgeSearcherBot(TelegramAdapter):
         message = request.data.get('message') or request.data.get('channel_post')
         if message:
             command, text_without_command = self.extract_command_from_message(message, True)
-            if command == 's' and text_without_command:
+            if command == 's':
                 params = build_search_result_message(message, text_without_command, source)
                 self.send_message(params)
             elif command == 'start':
