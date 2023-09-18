@@ -52,7 +52,7 @@ def build_message_body(result_data):
         title = escape_other_parts(result['title'])
         note_url = escape_url_parts(result['url'])
         source = escape_url_parts(quote(result_data['source']))
-        links.append(f'{index}. [{title}]({note_url}?source={source})')
+        links.append(f'{index}\\. [{title}]({note_url}?source={source})')
 
     links = '\n'.join(links)
     count = result_data['count']
