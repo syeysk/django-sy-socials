@@ -6,6 +6,7 @@ from rest_framework import status
 from django_sy_framework.utils.universal_api import API
 from social.adapters import TelegramAdapter
 
+from social.logger import logger
 from social.serializers_bot import KnowledgeSearcherTelegramSerializer
 
 DEFAULT_COUNT_ON_PAGE = 10
@@ -134,10 +135,11 @@ class KnowledgeSearcherBot(TelegramAdapter):
 
         callback_query = request.data.get('callback_query')
         if callback_query:
-            if callback_query['data'] == 'none':
-                return Response(status=status.HTTP_200_OK, data={})
+            if callback_query['data'] != 'none':
+                params = process_callback(callback_query, source)
+                self.edit_message(params)
 
-            params = process_callback(callback_query, source)
-            self.edit_message(params)
+        if not message and not callback_query:
+            logger.log(f'unknown content in hook_post_view of KnowledgeSearcherBot: {request.body.decode()}')
 
-        return Response(status=status.HTTP_200_OK, data={})
+        return Response(status=status.HTTP_200_OK)

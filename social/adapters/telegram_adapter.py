@@ -52,9 +52,9 @@ class TelegramAdapter(BaseAdapter):
     def send_message(self, params):
         response = requests.post(f'{self.url}/sendMessage', json=params)
         if response.status_code != 200:
-            logger.debug(f'Error during sending message: {response.content}\n\n')
+            logger.log(f'Error during sending message: {response.content}\n\n')
 
     def edit_message(self, params):
         response = requests.post(f'{self.url}/editMessageText', json=params)
         if response.status_code != 200:
-            logger.debug(f'Error during editing message: {response.content}\n\n')
+            logger.log(f'Error during editing message: {response.content}\n\n')
