@@ -32,10 +32,12 @@ def note_search(query, search_by='all', operator='or', count_on_page=15, page_nu
 
 
 def escape_url_parts(string: str):
-    return string.replace(')', '\\)').replace('\\', '\\\\)')
+    """For parse_mode = MarkdownV2 only"""
+    return string.replace(')', '\\)').replace('\\', '\\\\')
 
 
 def escape_other_parts(string: str):
+    """For parse_mode = MarkdownV2 only"""
     for symbol in '_*[]()~`>#+-=|{}.!':
         string = string.replace(symbol, f'\\{symbol}')
 
@@ -87,7 +89,7 @@ def process_message(message, is_from_chat, url, source):
             'text': build_message_body(result_data) if result_data else 'Ошибка сервера',
             'reply_to_message_id': message['message_id'],
             'disable_web_page_preview': True,
-            'parse_mode': 'Markdown',
+            'parse_mode': 'MarkdownV2',
         }
         if result_data:
             params['reply_markup'] = build_paginator_params(result_data['pages'])

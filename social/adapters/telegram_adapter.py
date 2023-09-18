@@ -7,6 +7,7 @@ from social.serializers_adapter import TelegramSerializer
 
 
 class TelegramAdapter(BaseAdapter):
+    """Telegram's API documentation: https://core.telegram.org/bots/api/"""
     verbose_name = 'Telegram'
     serializer = TelegramSerializer
     url_template = 'https://api.telegram.org/bot{}'
