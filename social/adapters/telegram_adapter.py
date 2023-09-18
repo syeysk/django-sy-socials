@@ -52,9 +52,23 @@ class TelegramAdapter(BaseAdapter):
     def send_message(self, params):
         response = requests.post(f'{self.url}/sendMessage', json=params)
         if response.status_code != 200:
-            logger.log(f'Error during sending message: {response.content}\n\n')
+            logger.error(f'Error in `send_message`: {response.content}\n\n')
 
     def edit_message(self, params):
         response = requests.post(f'{self.url}/editMessageText', json=params)
         if response.status_code != 200:
-            logger.log(f'Error during editing message: {response.content}\n\n')
+            logger.error(f'Error in `edit_message`: {response.content}\n\n')
+
+    def set_my_commands(self, params):
+        response = requests.post(f'{self.url}/setMyCommands', json=params)
+        if response.status_code != 200:
+            logger.error(f'Error in `set_my_commands`: {response.content}\n\n')
+
+        return response
+
+    def get_my_commands(self, params):
+        response = requests.post(f'{self.url}/getMyCommands', json=params)
+        if response.status_code != 200:
+            logger.error(f'Error in `get_my_commands`: {response.content}\n\n')
+
+        return response

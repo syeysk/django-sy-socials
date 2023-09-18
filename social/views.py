@@ -27,6 +27,7 @@ class ListSocialsView(APIView):
         page = paginator.page(page_number)
 
         auto_schema = AutoSchema()
+        buttons = {}
         adapter_maps = {}
         bots_by_adapter = {}
         bot_maps_by_adapter = {}
@@ -37,8 +38,10 @@ class ListSocialsView(APIView):
                 adapter_maps[adapter_name] = adapter_map['properties']
 
             bot_maps_by_adapter[adapter_name] = {}
+            buttons[adapter_name] = {}
             bots_by_adapter[adapter_name] = get_bot_names(adapter_name)
             for bot_name, bot_class in get_bot_names(adapter_name, True):
+                buttons[adapter_name][bot_name] = getattr(bot_class, 'buttons', [])
                 bot_serializer = getattr(bot_class, 'serializer', None)
                 if bot_serializer:
                     bot_map = auto_schema.map_serializer(bot_serializer())
@@ -54,6 +57,7 @@ class ListSocialsView(APIView):
             'serializer_maps': adapter_maps,
             'bots_by_adapter': bots_by_adapter,
             'bot_maps_by_adapter': bot_maps_by_adapter,
+            'buttons': buttons,
         }
         if 'credentials' in fields:
             for social in context['socials']:
@@ -138,3 +142,24 @@ class SetHookView(APIView):
         bot = bot_class(social, **credentials)
         hook_url = '{}{}'.format(settings.SITE_URL, resolve_url('hook', pk=pk))
         return Response(status=status.HTTP_200_OK, data={'ok': bot.set_hook(hook_url)})
+
+
+class RunButtonView(APIView):
+    def post(self, request, pk):
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        method_name = request.data['button']
+
+        social = Social.objects.get(pk=pk, created_by=request.user)
+        bot_class = bot_name_to_class(social.adapter, social.bot)
+        credentials = json.loads(social.credentials)
+        bot = bot_class(social, **credentials)
+
+        result = getattr(bot, method_name)()
+        if isinstance(result, tuple):
+            response_data = {'success': result[0], 'message': result[1]}
+        else:
+            response_data = {'success': result, 'message': 'Успешно' if result else 'Не удалось'}
+
+        return Response(status=status.HTTP_200_OK, data=response_data)

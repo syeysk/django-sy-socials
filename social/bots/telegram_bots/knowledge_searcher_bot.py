@@ -113,7 +113,7 @@ def process_callback(callback_query, source):
         'message_id': results_message.get('message_id'),
         'text': build_message_body(result_data) if result_data else 'Ошибка сервера',
         'disable_web_page_preview': True,
-        'parse_mode': 'Markdown',
+        'parse_mode': 'MarkdownV2',
     }
     if result_data:
         params['reply_markup'] = build_paginator_params(result_data['pages'], page_num)
@@ -124,6 +124,42 @@ def process_callback(callback_query, source):
 class KnowledgeSearcherBot(TelegramAdapter):
     verbose_name = 'Поисковик по базе знаний'
     serializer = KnowledgeSearcherTelegramSerializer
+    buttons = [
+        {
+            'set_commands': {'verbose_name': 'Установить команды'},
+            'get_commands': {'verbose_name': 'Посмотреть команды'},
+        },
+    ]
+
+    def set_commands(self):
+        """
+
+        :param request:
+        :return: False if unsuccess, True if success. Or tupple of (True/False, 'message text')
+        """
+        commands = [
+            {'command': 'start', 'description': 'Бот поиска по базе знаний. Команда для поиска: /s'},
+            {'command': 's', 'description': 'Ищет в базе знаний введённое слово'},
+        ]
+        tg_response = self.set_my_commands({'commands': commands})
+        if tg_response.status_code == 200:
+            json_data = tg_response.json()
+            return json_data['ok'] and json_data['result']
+
+        logger.error(f'unknown answer in set_commands of KnowledgeSearcherBot: {tg_response.content}')
+
+    def get_commands(self):
+        tg_response = self.get_my_commands({})
+        if tg_response.status_code == 200:
+            json_data = tg_response.json()
+            if json_data['ok']:
+                commands_lines = []
+                for command in json_data['result']:
+                    commands_lines.append('<b>/{command}</b> - {description}'.format(**command))
+
+                return True, tg_response.content#'<br>'.join(commands_lines) if commands_lines else 'Команды не установлены'
+
+        logger.error(f'unknown answer in get_commands of KnowledgeSearcherBot: {tg_response.content}')
 
     def hook_post_view(self, request):
         source = self.social.bot_settings.get('default_source') or None
@@ -140,6 +176,6 @@ class KnowledgeSearcherBot(TelegramAdapter):
                 self.edit_message(params)
 
         if not message and not callback_query:
-            logger.log(f'unknown content in hook_post_view of KnowledgeSearcherBot: {request.body.decode()}')
+            logger.error(f'unknown content in hook_post_view of KnowledgeSearcherBot: {request.body.decode()}')
 
         return Response(status=status.HTTP_200_OK)

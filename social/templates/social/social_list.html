@@ -21,10 +21,12 @@
     {{ serializer_maps|json_script:'serializer_maps' }}
     {{ bots_by_adapter|json_script:'bots_by_adapter' }}
     {{ bot_maps_by_adapter|json_script:'bot_maps_by_adapter' }}
+    {{ buttons|json_script:'buttons' }}
 		<script>
 			  var URL_ADD_SOCIAL = '';
 			  URL_CHECK_HOOK = 'check_hook/';
 			  URL_SET_HOOK = 'set_hook/';
+			  URL_RUN_BUTTON = 'run_button/';
         var CSRF_TOKEN = "{{ csrf_token }}";
 		</script>
 
@@ -38,9 +40,13 @@
 		  	<span class="result"></span>
 		</div>
 
+    <div class="windowBody" id="run_button">
+		  	<span class="result"></span>
+		</div>
+
 		<script>
         SocialComponent = {
-            props: ['adapter', 'bot', 'title', 'isNew', 'adapters', 'credentials', 'botsByAdapter', 'botSettings'],
+            props: ['adapter', 'bot', 'title', 'isNew', 'adapters', 'credentials', 'botsByAdapter', 'botSettings', 'buttons'],
             data() {
                 return {
                     collapsed: this.isNew ? false : true,
@@ -160,6 +166,25 @@
                         method: "post"
                     });
                 },
+                run_button(event) {
+                    let btn = event.target;
+                    $.ajax({
+                        url: URL_RUN_BUTTON + this.$.vnode.key,
+                        headers: {"X-CSRFToken": CSRF_TOKEN},
+                        data: {button: btn.dataset.button},
+                        success: function(result) {
+                            wbody = W.open('run_button', {text_title: btn.value});
+                            wbody.querySelector('.result').textContent = result.message;
+                            self.badMessage = '';
+                        },
+                        statusCode: {
+                            500: function(xhr) {
+                                self.badMessage = 'ошибка сервера'
+                            },
+                        },
+                        method: "post"
+                    });
+                }
             },
             template: `
                 <div style="cursor: pointer;" @click="toggle">
@@ -229,9 +254,16 @@
 														&nbsp;
 														<input type="button" value="Проверить правильность хука" class="btn btn-secondary" @click="check_hook" v-if="adapters[mAdapter].has_hook_buttons.get">
 														<!--
-														&nbsp;
 														<input type="button" value="Удалить" class="btn btn-secondary" @click="delete_hook" v-if="adapters[mAdapter].has_hook_buttons.delete">
 														-->
+														<br>
+														<div v-for="bot_buttons in buttons[mAdapter][mBot]">
+														    <span v-for="(button, button_name) in bot_buttons">
+    														    <input type="button" :value="button.verbose_name" :data-button="button_name" class="btn btn-secondary" @click="run_button">
+		    											    	&nbsp;
+														    </span>
+    												</div>
+
 												</div>
 
 												<br>
@@ -254,6 +286,7 @@
 		  	            socials: JSON.parse(document.getElementById('social_list').textContent),
 		  	            adapters: JSON.parse(document.getElementById('adapters').textContent),
 		  	            bots_by_adapter: JSON.parse(document.getElementById('bots_by_adapter').textContent),
+		  	            buttons: JSON.parse(document.getElementById('buttons').textContent),
 		  	            uncollapsed_component: null,
 		  	        };
 			      },
@@ -271,6 +304,7 @@
 			              :botSettings="social.bot_settings"
 			              @toggle="toggle"
 			              :adapters="adapters"
+			              :buttons="buttons"
 			              :bots-by-adapter="bots_by_adapter"
 			              :is-new="social.isNew == undefined ? false : social.isNew"
 			          ></social-component>
