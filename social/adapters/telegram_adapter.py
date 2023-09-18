@@ -13,9 +13,10 @@ class TelegramAdapter(BaseAdapter):
     serializer = TelegramSerializer
     url_template = 'https://api.telegram.org/bot{}'
 
-    def __init__(self, *args, token):
+    def __init__(self, *args, token, bot_username):
         super().__init__(*args)
         self.url = self.url_template.format(token)
+        self.bot_username = bot_username
 
     def send_message_to_channel(self, text: str, channel: int):
         params = {
@@ -28,6 +29,25 @@ class TelegramAdapter(BaseAdapter):
 
     def verify_hook(self, request):
         return request.META.get('HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN') == self.social.any_data.get('secret_token')
+
+    def extract_command_from_message(self, message: dict, return_cleared_text=False):
+        entities = message.get('entities', [])
+        for entity in entities:
+            if entity['type'] == 'bot_command':
+                text = message['text']
+                offset = entity['offset']
+                length = entity['length']
+                command = text[offset:length]
+                command_parts = command.split('@')
+                if len(command_parts) == 2:
+                    command, bot_username = command_parts
+                    if self.bot_username != bot_username:
+                        return
+
+                return (
+                    command[1:],
+                    '{}{}'.format(text[:offset], text[length:]),
+                ) if return_cleared_text else command[1:]
 
     def set_hook(self, url):
         secret_token = str(uuid.uuid4())
