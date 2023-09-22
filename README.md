@@ -1,6 +1,6 @@
-# Шаблон микросервисов
+# Микросервис ботов социальных сетей
 
-Пожалуйста, используйте данный репозиторий-шаблон для создания новых микросервисов.
+<p align="center"><img src="static/logo.svg" align="middle" width="25%"></p>
 
 ## Введение
 
@@ -40,7 +40,7 @@ HTTP/2 200 возвращает JSON ответ.
 
 ## API сервера
 
-[Документация API](https://github.com/TVP-Support/django_knowledge/wiki)
+[Документация API](https://bot.intera.space/api/v1/schema/swagger-ui/)
 
 ## План разработки микросервиса
 
